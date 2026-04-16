@@ -1,0 +1,8 @@
+MYSQL_ROOT_PASSWORD='root_password'
+MYSQL_HOST='mariadb-tiny'
+MYSQL_PORT=3306
+
+CELERY_BROKER_URL="redis://valkey-db:6379"
+CELERY_RESULT_BACKEND="redis://valkey-db:6379"
+
+OPENAI_API_KEY=''
