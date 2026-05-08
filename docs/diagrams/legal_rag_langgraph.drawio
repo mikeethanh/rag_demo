@@ -1,0 +1,197 @@
+<mxfile host="app.diagrams.net">
+  <diagram name="Legal RAG LangGraph" id="legal-rag-v1">
+    <mxGraphModel dx="1211" dy="675" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1654" pageHeight="1169" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="start" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=13;fontStyle=1;" value="__START__&#xa;User Legal Query" vertex="1">
+          <mxGeometry height="70" width="180" x="660" y="40" as="geometry" />
+        </mxCell>
+        <mxCell id="state-group" parent="1" style="swimlane;fontStyle=1;fontSize=13;fillColor=#eaf4fb;strokeColor=#2980b9;strokeWidth:2;startSize=35;rounded=1;" value="📦 GraphState" vertex="1">
+          <mxGeometry height="80" width="440" x="530" y="140" as="geometry" />
+        </mxCell>
+        <mxCell id="sk1" parent="state-group" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=11;" value="query: str" vertex="1">
+          <mxGeometry height="35" width="80" x="10" y="40" as="geometry" />
+        </mxCell>
+        <mxCell id="sk2" parent="state-group" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=11;" value="documents: list" vertex="1">
+          <mxGeometry height="35" width="90" x="100" y="40" as="geometry" />
+        </mxCell>
+        <mxCell id="sk3" parent="state-group" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=11;" value="generation: str" vertex="1">
+          <mxGeometry height="35" width="90" x="200" y="40" as="geometry" />
+        </mxCell>
+        <mxCell id="sk4" parent="state-group" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=11;" value="transformation_count: int" vertex="1">
+          <mxGeometry height="35" width="80" x="330" y="40" as="geometry" />
+        </mxCell>
+        <mxCell id="rw-group" parent="1" style="swimlane;fontStyle=1;fontSize=12;fillColor=#fdfefe;strokeColor=#5d6d7e;strokeWidth=2;startSize=35;rounded=1;" value="🔁 Node: Rewrite" vertex="1">
+          <mxGeometry height="120" width="430" x="540" y="280" as="geometry" />
+        </mxCell>
+        <mxCell id="rw1" parent="rw-group" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;fontSize=11;" value="CoT Prompt:&#xa;&#39;Think step-by-step about&#xa;the legal intent of the query…&#39;" vertex="1">
+          <mxGeometry height="60" width="175" x="10" y="45" as="geometry" />
+        </mxCell>
+        <mxCell id="rw2" parent="rw-group" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;fontSize=11;" value="LLM rewrites query&lt;br&gt;for retrieval" vertex="1">
+          <mxGeometry height="60" width="80" x="207" y="45" as="geometry" />
+        </mxCell>
+        <mxCell id="rw3" parent="rw-group" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;fontSize=11;" value="transformation_count += 1" vertex="1">
+          <mxGeometry height="60" width="75" x="330" y="45" as="geometry" />
+        </mxCell>
+        <mxCell id="e-rw1-rw2" edge="1" parent="rw-group" source="rw1" style="edgeStyle=orthogonalEdgeStyle;" target="rw2">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e-rw2-rw3" edge="1" parent="rw-group" source="rw2" style="edgeStyle=orthogonalEdgeStyle;" target="rw3">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="rt-group" parent="1" style="swimlane;fontStyle=1;fontSize=12;fillColor=#fdfefe;strokeColor=#5d6d7e;strokeWidth=2;startSize=35;rounded=1;" value="🔍 Node: Retrieve" vertex="1">
+          <mxGeometry height="120" width="430" x="540" y="460" as="geometry" />
+        </mxCell>
+        <mxCell id="rt1" parent="rt-group" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;fontSize=11;" value="Embed rewritten query&#xa;text-embedding-3-large" vertex="1">
+          <mxGeometry height="55" width="155" x="10" y="45" as="geometry" />
+        </mxCell>
+        <mxCell id="rt2" parent="rt-group" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;fontSize=11;" value="Search Qdrant&#xa;collection: llm | top-k=5" vertex="1">
+          <mxGeometry height="55" width="100" x="180" y="45" as="geometry" />
+        </mxCell>
+        <mxCell id="rt3" parent="rt-group" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;fontSize=11;" value="documents ← ranked chunks&#xa;+ metadata (title, source, page)" vertex="1">
+          <mxGeometry height="55" width="85" x="310" y="45" as="geometry" />
+        </mxCell>
+        <mxCell id="e-rt1-rt2" edge="1" parent="rt-group" source="rt1" style="edgeStyle=orthogonalEdgeStyle;" target="rt2">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e-rt2-rt3" edge="1" parent="rt-group" source="rt2" style="edgeStyle=orthogonalEdgeStyle;" target="rt3">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="gd-group" parent="1" style="swimlane;fontStyle=1;fontSize=12;fillColor=#fef9e7;strokeColor=#f39c12;strokeWidth=2;startSize=35;rounded=1;" value="🧑‍⚖️ Node: Grade_Docs (Self-Reflection)" vertex="1">
+          <mxGeometry height="120" width="380" x="560" y="640" as="geometry" />
+        </mxCell>
+        <mxCell id="gd1" parent="gd-group" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=11;" value="For each doc:&#xa;LLM scores relevance 0–1&#xa;vs rewritten query" vertex="1">
+          <mxGeometry height="60" width="180" x="10" y="45" as="geometry" />
+        </mxCell>
+        <mxCell id="gd2" parent="gd-group" style="rhombus;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=11;" value="avg_score ≥ threshold (0.7)?" vertex="1">
+          <mxGeometry height="80" width="155" x="210" y="30" as="geometry" />
+        </mxCell>
+        <mxCell id="e-gd1-gd2" edge="1" parent="gd-group" source="gd1" style="edgeStyle=orthogonalEdgeStyle;" target="gd2">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="limit-group" parent="1" style="swimlane;fontStyle=1;fontSize=12;fillColor=#fde8e8;strokeColor=#e74c3c;strokeWidth=2;startSize=35;rounded=1;dashed=1;" value="🔀 Conditional Edge: Rollback Guard" vertex="1">
+          <mxGeometry height="150" width="410" x="80" y="640" as="geometry" />
+        </mxCell>
+        <mxCell id="lm1" parent="limit-group" style="rhombus;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;fontSize=11;" value="transformation_count &lt; 3?" vertex="1">
+          <mxGeometry height="75" width="155" x="10" y="30" as="geometry" />
+        </mxCell>
+        <mxCell id="lm2" parent="limit-group" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;fontSize=11;" value="ROLLBACK&#xa;route → Rewrite" vertex="1">
+          <mxGeometry height="55" width="75" x="200" y="90" as="geometry" />
+        </mxCell>
+        <mxCell id="lm3" parent="limit-group" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;fontSize=11;" value="ABORT&#xa;route → Fallback LLM" vertex="1">
+          <mxGeometry height="55" width="75" x="320" y="40" as="geometry" />
+        </mxCell>
+        <mxCell id="e-lm1-lm2" edge="1" parent="limit-group" source="lm1" style="edgeStyle=orthogonalEdgeStyle;fontSize=10;fontStyle=1;" target="lm2" value="yes">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e-lm1-lm3" edge="1" parent="limit-group" source="lm1" style="edgeStyle=orthogonalEdgeStyle;fontSize=10;fontStyle=1;" target="lm3" value="no">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="fallback" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fadbd8;strokeColor=#c0392b;fontSize=12;" value="⚠️ Fallback Node&#xa;Answer from LLM only&#xa;(no citations)" vertex="1">
+          <mxGeometry height="70" width="190" x="160" y="840" as="geometry" />
+        </mxCell>
+        <mxCell id="gen-group" parent="1" style="swimlane;fontStyle=1;fontSize=12;fillColor=#eafaf1;strokeColor=#27ae60;strokeWidth=2;startSize=35;rounded=1;" value="✍️ Node: Generate" vertex="1">
+          <mxGeometry height="120" width="380" x="560" y="840" as="geometry" />
+        </mxCell>
+        <mxCell id="gn1" parent="gen-group" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=11;" value="Build prompt:&#xa;system + history + docs + query" vertex="1">
+          <mxGeometry height="55" width="130" x="10" y="45" as="geometry" />
+        </mxCell>
+        <mxCell id="gn2" parent="gen-group" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=11;" value="CoT instruction:&#xa;&#39;Reason through statutes,&#xa;cite doc indices, then answer&#39;" vertex="1">
+          <mxGeometry height="55" width="130" x="150" y="45" as="geometry" />
+        </mxCell>
+        <mxCell id="gn3" parent="gen-group" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=11;" value="LLM call →&#xa;generation: str" vertex="1">
+          <mxGeometry height="55" width="80" x="290" y="45" as="geometry" />
+        </mxCell>
+        <mxCell id="e-gn1-gn2" edge="1" parent="gen-group" source="gn1" style="edgeStyle=orthogonalEdgeStyle;" target="gn2">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e-gn2-gn3" edge="1" parent="gen-group" source="gn2" style="edgeStyle=orthogonalEdgeStyle;" target="gn3">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="fu-group" parent="1" style="swimlane;fontStyle=1;fontSize=12;fillColor=#f5eef8;strokeColor=#8e44ad;strokeWidth=2;startSize=35;rounded=1;" value="💬 Node: Follow_up" vertex="1">
+          <mxGeometry height="120" width="380" x="560" y="1030" as="geometry" />
+        </mxCell>
+        <mxCell id="fu1" parent="fu-group" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontSize=11;" value="Context = query +&#xa;documents + generation" vertex="1">
+          <mxGeometry height="55" width="130" x="10" y="45" as="geometry" />
+        </mxCell>
+        <mxCell id="fu2" parent="fu-group" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontSize=11;" value="LLM generates 3&#xa;context-aware&#xa;follow-up questions" vertex="1">
+          <mxGeometry height="55" width="130" x="150" y="45" as="geometry" />
+        </mxCell>
+        <mxCell id="fu3" parent="fu-group" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontSize=11;" value="Attach to&#xa;response payload" vertex="1">
+          <mxGeometry height="55" width="80" x="290" y="45" as="geometry" />
+        </mxCell>
+        <mxCell id="e-fu1-fu2" edge="1" parent="fu-group" source="fu1" style="edgeStyle=orthogonalEdgeStyle;" target="fu2">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e-fu2-fu3" edge="1" parent="fu-group" source="fu2" style="edgeStyle=orthogonalEdgeStyle;" target="fu3">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="agg-group" parent="1" style="swimlane;fontStyle=1;fontSize=12;fillColor=#eaf4fb;strokeColor=#2980b9;strokeWidth=2;startSize=35;rounded=1;" value="📤 Response Aggregator" vertex="1">
+          <mxGeometry height="90" width="380" x="560" y="1230" as="geometry" />
+        </mxCell>
+        <mxCell id="a1" parent="agg-group" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=11;" value="generation (cited answer)" vertex="1">
+          <mxGeometry height="35" width="110" x="10" y="50" as="geometry" />
+        </mxCell>
+        <mxCell id="a2" parent="agg-group" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=11;" value="source documents + pages" vertex="1">
+          <mxGeometry height="35" width="110" x="135" y="40" as="geometry" />
+        </mxCell>
+        <mxCell id="a3" parent="agg-group" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=11;" value="follow-up questions" vertex="1">
+          <mxGeometry height="35" width="110" x="267" y="40" as="geometry" />
+        </mxCell>
+        <mxCell id="end" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=13;fontStyle=1;" value="__END__&#xa;Return to Semantic Router" vertex="1">
+          <mxGeometry height="70" width="180" x="660" y="1400" as="geometry" />
+        </mxCell>
+        <mxCell id="e-start-state" edge="1" parent="1" source="start" style="edgeStyle=orthogonalEdgeStyle;strokeWidth=2;" target="state-group">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e-state-rw" edge="1" parent="1" source="state-group" style="edgeStyle=orthogonalEdgeStyle;strokeWidth=2;" target="rw-group">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e-rw-rt" edge="1" parent="1" source="rw-group" style="edgeStyle=orthogonalEdgeStyle;strokeWidth=2;" target="rt-group">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e-rt-gd" edge="1" parent="1" source="rt-group" style="edgeStyle=orthogonalEdgeStyle;strokeWidth=2;" target="gd-group">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e-gd-limit" edge="1" parent="1" source="gd-group" style="edgeStyle=orthogonalEdgeStyle;strokeColor=#e74c3c;strokeWidth=2;fontStyle=1;fontSize=10;exitX=0;exitY=0.5;exitDx=0;exitDy=0;" target="limit-group" value="❌ Rollback">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e-gd-gen" edge="1" parent="1" source="gd-group" style="edgeStyle=orthogonalEdgeStyle;strokeColor=#27ae60;strokeWidth=2;fontStyle=1;fontSize=10;" target="gen-group" value="✅ Pass">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e-lm2-rw" edge="1" parent="1" source="limit-group" style="edgeStyle=orthogonalEdgeStyle;strokeColor=#e74c3c;strokeWidth:2;fontStyle=1;fontSize=10;dashed=1;exitX=0.5;exitY=0;exitDx=0;exitDy=0;" target="rw-group" value="loop back">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="320" y="580" />
+              <mxPoint x="460" y="580" />
+              <mxPoint x="460" y="340" />
+              <mxPoint x="560" y="340" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e-lm3-fallback" edge="1" parent="1" source="limit-group" style="edgeStyle=orthogonalEdgeStyle;strokeColor=#c0392b;strokeWidth=2;fontStyle=1;fontSize=10;" target="fallback" value="abort">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e-fallback-fu" edge="1" parent="1" source="fallback" style="edgeStyle=orthogonalEdgeStyle;strokeColor=#c0392b;strokeWidth:1.5;dashed=1;" target="fu-group">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="255" y="960" />
+              <mxPoint x="255" y="1090" />
+              <mxPoint x="560" y="1090" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="e-gen-fu" edge="1" parent="1" source="gen-group" style="edgeStyle=orthogonalEdgeStyle;strokeWidth=2;" target="fu-group">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e-fu-agg" edge="1" parent="1" source="fu-group" style="edgeStyle=orthogonalEdgeStyle;strokeWidth=2;" target="agg-group">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e-agg-end" edge="1" parent="1" source="agg-group" style="edgeStyle=orthogonalEdgeStyle;strokeWidth=2;" target="end">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
