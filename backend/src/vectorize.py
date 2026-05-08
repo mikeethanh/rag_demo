@@ -10,7 +10,7 @@ client = QdrantClient(url="http://qdrant-db:6333")
 def create_collection(name):
     return client.create_collection(
         collection_name=name,
-        vectors_config=VectorParams(size=1536, distance=Distance.DOT),
+        vectors_config=VectorParams(size=3072, distance=Distance.DOT),
     )
 
 
@@ -24,8 +24,8 @@ def add_vector(collection_name, vectors={}):
 
 
 def search_vector(collection_name, vector, limit=4):
-    res = client.search(
-        collection_name=collection_name, query_vector=vector, limit=limit
+    res = client.query_points(
+        collection_name=collection_name, query=vector, limit=limit
     )
-    payloads = [x.payload for x in res]
+    payloads = [x.payload for x in res.points]
     return payloads
