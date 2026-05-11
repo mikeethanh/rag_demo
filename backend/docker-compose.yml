@@ -18,38 +18,9 @@ services:
       - DEBUG=False
     volumes:
       - .:/usr/src/app/
+      - checkpointer_data:/data/checkpointer
     ports:
       - 8000:8000
-    networks:
-      - internal-network
-
-  chatbot-worker:
-    build: .
-    hostname: chatbot-worker
-    container_name: chatbot-worker
-    command: celery -A tasks.celery_app worker --loglevel=debug --logfile=/var/logs/celery.log
-    restart: always
-    env_file:
-      - .env
-    environment:
-      - DEBUG=False
-    volumes:
-      - .:/usr/src/app
-      - worker_volume:/var/logs/
-    networks:
-      - internal-network
-
-  valkey-db:
-    image: 'valkey/valkey:bookworm'
-    hostname: valkey-db
-    container_name: valkey-db
-    restart: always
-    ports:
-      - "6379:6379"
-    command:
-      - '--save 60 1'
-    volumes:
-      - valkey_data:/data
     networks:
       - internal-network
 
@@ -76,9 +47,8 @@ services:
 configs:
   qdrant_config:
     content: |
-      log_level: INFO      
+      log_level: INFO
 
 volumes:
-  worker_volume:
-  valkey_data:
+  checkpointer_data:
   qdrant_volume:

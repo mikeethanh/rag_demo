@@ -1,27 +1,49 @@
 import logging
-import time
-from typing import Dict, Optional
-from celery.result import AsyncResult
+from typing import Any, Dict, List, Optional
 from fastapi import FastAPI, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 
-from models import insert_document
 from utils import setup_logging
-from tasks import llm_handle_message, index_document_v2
-from vectorize import create_collection
+from models import insert_document
+from vectorize import create_collection, add_vector, search_vector
+from brain import get_embedding
+from splitter import split_document
+from configs import DEFAULT_COLLECTION_NAME
+from agent.main_graph import get_main_graph
+from server.agui_handler import agui_event_stream
 
 setup_logging()
 logger = logging.getLogger(__name__)
 
-
 app = FastAPI()
 
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
-class CompleteRequest(BaseModel):
-    bot_id: Optional[str] = 'botFinancial'
-    user_id: str
-    user_message: str
-    sync_request: Optional[bool] = False
+
+class MessageInput(BaseModel):
+    role: str
+    content: Any  # AG-UI sends string or list of content blocks
+    id: Optional[str] = None
+
+
+class RunRequest(BaseModel):
+    # AG-UI client sends camelCase; support both forms
+    threadId: Optional[str] = None
+    thread_id: Optional[str] = None
+    runId: Optional[str] = None
+    messages: Optional[List[MessageInput]] = None
+    input: Optional[List[MessageInput]] = None
+    state: Optional[Dict[str, Any]] = None
+    tools: Optional[List[Any]] = None
+    context: Optional[List[Any]] = None
+    forwardedProps: Optional[Dict[str, Any]] = None
 
 
 @app.get("/")
@@ -29,57 +51,58 @@ async def root():
     return {"message": "Hello World"}
 
 
-@app.post("/chat/complete")
-async def complete(data: CompleteRequest):
-    bot_id = data.bot_id
-    user_id = data.user_id
-    user_message = data.user_message
-    logger.info(f"Complete chat from user {user_id} to {bot_id}: {user_message}")
+@app.post("/runs")
+async def run_agent(data: RunRequest):
+    thread_id = data.threadId or data.thread_id
+    if not thread_id:
+        raise HTTPException(status_code=400, detail="threadId is required")
 
-    if not user_message or not user_id:
-        raise HTTPException(status_code=400, detail="User id and user message are required")
+    all_messages = data.messages or data.input or []
+    user_messages = [m for m in all_messages if m.role == "user"]
+    if not user_messages:
+        raise HTTPException(status_code=400, detail="input must contain at least one user message")
 
-    if data.sync_request:
-        response = llm_handle_message(bot_id, user_id, user_message)
-        return {"response": str(response)}
-    else:
-        task = llm_handle_message.delay(bot_id, user_id, user_message)
-        return {"task_id": task.id}
+    raw_content = user_messages[-1].content
+    query = raw_content if isinstance(raw_content, str) else " ".join(
+        c.get("text", "") for c in raw_content if isinstance(c, dict)
+    )
+    if not query.strip():
+        raise HTTPException(status_code=400, detail="user message content must not be empty")
 
+    logger.info("AG-UI run — thread_id=%s query=%s", thread_id, query)
 
-@app.get("/chat/complete/{task_id}")
-async def get_response(task_id: str):
-    start_time = time.time()
-    while True:
-        task_result = AsyncResult(task_id)
-        task_status = task_result.status
-        logger.info(f"Task result: {task_result.result}")
+    graph = get_main_graph()
+    initial_state = {**(data.state or {}), "query": query, "transformation_count": 0}
+    config = {"configurable": {"thread_id": thread_id}}
 
-        if task_status == 'PENDING':
-            if time.time() - start_time > 60:  
-                return {
-                    "task_id": task_id,
-                    "task_status": task_result.status,
-                    "task_result": task_result.result,
-                    "error_message": "Service timeout, retry please"
-                }
-            else:
-                time.sleep(0.5)  
-        else:
-            result = {
-                "task_id": task_id,
-                "task_status": task_result.status,
-                "task_result": task_result.result
-            }
-            return result
+    return StreamingResponse(
+        agui_event_stream(graph, initial_state, config),
+        media_type="text/event-stream",
+        headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
+    )
 
 
 @app.post("/collection/create")
 async def create_vector_collection(data: Dict):
     collection_name = data.get("collection_name")
     create_status = create_collection(collection_name)
-    logging.info(f"Create collection {collection_name} status: {create_status}")
+    logger.info("Create collection %s status: %s", collection_name, create_status)
     return {"status": create_status is not None}
+
+
+def _index_document(doc_id, title, content, collection_name=DEFAULT_COLLECTION_NAME):
+    text = title + " " + content
+    nodes = split_document(text)
+    status_list = []
+    for node in nodes:
+        vector = get_embedding(node.text)
+        status = add_vector(
+            collection_name=collection_name,
+            vectors={doc_id: {"vector": vector, "payload": {"title": title, "content": node.text}}},
+        )
+        status_list.append(status)
+    logger.info("Add vector status: %s", status_list)
+    return status_list
 
 
 @app.post("/document/create")
@@ -88,11 +111,12 @@ async def create_document(data: Dict):
     title = data.get("title")
     content = data.get("content")
     create_status = insert_document(title, content)
-    logging.info(f"Create document status: {create_status}")
-    index_status = index_document_v2(doc_id, title, content)
+    logger.info("Create document status: %s", create_status)
+    index_status = _index_document(doc_id, title, content)
     return {"status": create_status is not None, "index_status": index_status}
 
 
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run("app:app", host="0.0.0.0", port=8002, workers=2, log_level="info")
+
